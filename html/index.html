@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<h1>PiSOwZP: wykres temperatury online</h1>
+ <p>Time: <span id="time"></span> </p>
+ <p>Temperature: <span id="temperature"></span> </p>
+
+
+<script>
+
+window.onload = function () {
+var dps = []; 
+var chart = new CanvasJS.Chart("chartContainer", {
+	title :{
+		text: "Temperature"		
+	},
+	data: [{
+		type: "spline",
+		dataPoints: dps
+	}]
+});
+
+var xVal = 0;
+
+var updateInterval = 1000;	//Page refresh time in milliseconds
+var dataLength = 20; 		//Number of data points in the graph
+
+let xhr= new XMLHttpRequest();
+
+function processRequest() {
+		if (xhr.readyState == 4 && xhr.status == 200) {
+			
+			// complete this function
+			let response = xhr.responseText;
+			let parts = response.split("&");
+       		let result_time = parts[0].split("=")[1];
+       		let result_temp = parts[1].split("=")[1];
+        
+        
+			// let response = xhr.responseText;
+			// let result_time = response.slice(6,8);
+			// let result_temp = response.slice(20,24);
+			document.getElementById("time").innerHTML = result_time;
+			document.getElementById("temperature").innerHTML = result_temp;
+			let newDataPoint = parseFloat(result_temp);
+			updateChart(newDataPoint);
+			// time=%d&temperature=%d.%d
+			
+		}
+		
+	}
+
+function sendHTTPRequest()
+{
+		
+xhr.open("GET", "/dataread", true);
+xhr.onreadystatechange = processRequest;
+xhr.send();
+
+
+
+}
+
+function updateChart (yVal) {
+	
+		dps.push({			//adds the data point to the graph
+			x: xVal,
+			y: yVal
+		});
+		xVal++;
+
+	if (dps.length > dataLength) {	//shifts the input table if the table is full
+		dps.shift();
+	}
+
+	chart.render();			//shows the graph
+};
+
+
+setInterval(function(){sendHTTPRequest()}, updateInterval);		//The function sendHTTPRequest() will be called periodically, with the interval defined by the variable updateInterval
+
+}
+</script>
+</head>
+<body>
+<div id="chartContainer" style="height: 370px; width:100%;"></div>
+<script src="chart.js"></script>
+</body>
+</html>
